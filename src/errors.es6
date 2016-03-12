@@ -123,8 +123,8 @@ export class AmqpConsumerCancelTimeoutError extends AmqpConsumerError {
 
 export class AmqpRpcError extends AmqpClientError {
   constructor(amqp, rpc, msg) {
-    this.rpc = rpc;
     super(amqp, msg || `Rpc call ${rpc.name} error`, 'AmqpRpcError');
+    this.rpc = rpc;
     Error.captureStackTrace(this, this.constructor);
   }
 

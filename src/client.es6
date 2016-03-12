@@ -93,9 +93,11 @@ export default class AmqpClient {
       }
     });
 
-    setTimeout(() => consumer.cancelAsync(new AmqpRpcTimeoutError(this, rpcCall)), timeout);
+    const t = setTimeout(() => consumer.cancelAsync(new AmqpRpcTimeoutError(this, rpcCall)), timeout);
 
     await consumer.completion;
+
+    clearTimeout(t);
 
     if (response.status == 'success') {
       return response.data;
