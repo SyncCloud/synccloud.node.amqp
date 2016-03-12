@@ -5,7 +5,7 @@ import AmqpService from './service';
 
 const errors = require('./errors');
 
-export default {
+export {
   AmqpChannel,
   AmqpClient,
   AmqpConsumer,
