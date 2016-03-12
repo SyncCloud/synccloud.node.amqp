@@ -1,14 +1,5 @@
-import AmqpChannel from './channel';
-import AmqpClient from './client';
-import AmqpConsumer from './amqp-consumer';
-import AmqpService from './service';
-
-const errors = require('./errors');
-
-export {
-  AmqpChannel,
-  AmqpClient,
-  AmqpConsumer,
-  AmqpService,
-  ...errors
-}
+export * from './errors';
+export { default as AmqpChannel } from './channel';
+export { default as AmqpClient } from './client';
+export { default as AmqpConsumer } from './amqp-consumer';
+export { default as AmqpService } from './service';
