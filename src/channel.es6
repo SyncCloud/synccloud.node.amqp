@@ -120,42 +120,23 @@ export default class AmqpChannel {
     await Promise.resolve(this._channel.prefetch(count));
   }
 
-  @trace
-  async publishAsync(exchange, routingKey, body, headers) {
+  async publishAsync({exchange, routingKey, body, ...options}) {
     const deferred = new Deferred();
     const error = (err) => deferred.reject(err);
     this._channel.once('error', error);
+
+    let buf;
+    if (body instanceof Buffer) {
+      buf = body;
+    } else if (typeof body == 'string') {
+      buf = new Buffer(body, 'utf8');
+    } else {
+      buf = new Buffer(JSON.stringify(body), 'utf8')
+    }
+
     try {
       try {
-        await this._channel.publish(
-          exchange, routingKey, body, {
-            persistent: true,
-            headers: headers || {}
-          });
-
-        if (typeof (this._channel.waitForConfirms) === 'function') {
-          await this._channel.waitForConfirms();
-        }
-      }
-      catch (exc) {
-        deferred.reject(exc);
-      }
-      deferred.resolve();
-      await deferred.promise;
-    }
-    finally {
-      this._channel.removeListener('error', error);
-    }
-  }
-
-  async publishAsync2({exchange, routingKey, body, options}) {
-    const deferred = new Deferred();
-    const error = (err) => deferred.reject(err);
-    this._channel.once('error', error);
-    try {
-      try {
-        await this._channel.publish(
-          exchange, routingKey, body, options);
+        await this._channel.publish(exchange, routingKey, buf, options);
 
         if (typeof (this._channel.waitForConfirms) === 'function') {
           await this._channel.waitForConfirms();
@@ -175,8 +156,7 @@ export default class AmqpChannel {
   @trace
   async consumeAsync(queue, handler, options) {
     const consumer = new AmqpConsumer(this, queue, handler);
-    const response = await this._channel.consume(
-      queue, (message) => consumer._handle(message), options);
+    const response = await this._channel.consume(queue, (message) => consumer._handle(message), options);
     consumer._consumerTag = response.consumerTag;
     this._consumers.push(consumer);
     return consumer;

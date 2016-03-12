@@ -1,7 +1,14 @@
 import amqplib from 'amqplib';
 import {Deferred, Cancellation, CancellationSource} from '@synccloud/utils';
 import {Log, trace} from '@synccloud/logging';
-import {AmqpClientClosedError, AmqpClientCloseTimeoutError} from './errors';
+
+import {
+  AmqpClientClosedError,
+  AmqpClientCloseTimeoutError,
+  AmqpRpcFailedError,
+  AmqpRpcTimeoutError
+} from './errors';
+
 import AmqpChannel from './channel';
 
 export default class AmqpClient {
@@ -50,6 +57,67 @@ export default class AmqpClient {
         dying: this._dying
       };
     };
+  }
+
+  @trace
+  async invokeRpcAsync(rpcCall) {
+    const {exchange, name, request, requestId, version, timeout = 30000} = rpcCall;
+    Log.info(
+      () => ({
+        msg: `Initiating RPC call`,
+        rpcCall,
+      }), ({message:m}) => `${m.msg} ${m.rpcCall.name} request=${m.rpcCall.request}`);
+
+    let response;
+    const channel = await this.channelAsync(!'confirm');
+    const DIRECT_REPLY_TO_QUEUE = 'amq.rabbitmq.reply-to';
+
+    const consumer = await channel.consumeAsync(DIRECT_REPLY_TO_QUEUE, handleResponse, {
+      noAck: true,
+      exclusive: true
+    });
+
+    const serialized = new Buffer(JSON.stringify(request), 'utf8');
+
+    await channel.publishAsync({
+      exchange,
+      routingKey: name,
+      body: serialized,
+      persistent: false,
+      expiration: timeout,
+      replyTo: DIRECT_REPLY_TO_QUEUE,
+      headers: {
+        'api.request-id': requestId,
+        "api.rpc.name": name,
+        "api.rpc.version": version
+      }
+    });
+
+    setTimeout(() => consumer.cancelAsync(new AmqpRpcTimeoutError(this, rpcCall)), timeout);
+
+    await consumer.completion;
+
+    if (response.status == 'success') {
+      return response.data;
+    } else {
+      throw new AmqpRpcFailedError(this, rpcCall, response);
+    }
+
+    function handleResponse(consumer, message) {
+      const body = message.content.toString('utf8');
+      try {
+        response = JSON.parse(body);
+        Log[response.status=='success' ? 'info' : 'warning'](
+          () => ({
+            msg: `Receive RPC response`,
+            rpcCall,
+            response: body
+          }), ({message:m}) => `${m.msg} ${Log.format(m.response)}`);
+        consumer.cancelAsync();
+      } catch (err) {
+        consumer.cancelAsync(err);
+      }
+    }
   }
 
   @trace

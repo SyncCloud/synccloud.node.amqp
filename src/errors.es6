@@ -119,3 +119,33 @@ export class AmqpConsumerCancelTimeoutError extends AmqpConsumerError {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+
+export class AmqpRpcError extends AmqpClientError {
+  constructor(amqp, rpc, msg) {
+    this.rpc = rpc;
+    super(amqp, msg || `Rpc call ${rpc.name} error`, 'AmqpRpcError');
+    Error.captureStackTrace(this, this.constructor);
+  }
+
+  toJSON() {
+    return _.merge(super.toJSON(), {
+      $type: 'AmqpRpcError',
+      rpc: this.rpc
+    });
+  }
+}
+
+export class AmqpRpcTimeoutError extends AmqpRpcError {
+  constructor(amqp, rpc) {
+    super(amqp, `Rpc call ${rpc.name} interrupted by timeout ${rpc.timeout}ms`, 'AmqpRpcTimeoutError');
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class AmqpRpcFailedError extends AmqpRpcError {
+  constructor(amqp, rpc, response) {
+    super(amqp, `Rpc call ${rpc.name} failed with status ${response.status}: ${response.error}`, 'AmqpClientRpcFailError');
+    Error.captureStackTrace(this, this.constructor);
+  }
+}

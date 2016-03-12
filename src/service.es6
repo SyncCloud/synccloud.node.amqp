@@ -53,7 +53,7 @@ export default class AmqpService {
             .use(pipeline.ack)
             .use(pipeline.logError)
             .use(async (ctx, next) => {
-              ctx.publishAsync = pubChannelConfirm.publishAsync2.bind(pubChannelConfirm); //todo refactor
+              ctx.publishAsync = pubChannelConfirm.publishAsync.bind(pubChannelConfirm); //todo refactor
               await next();
             })
             .use(pipeline.parseJSON());
@@ -80,7 +80,7 @@ export default class AmqpService {
           consumer
             .use(pipeline.logError)
             .use(async (ctx, next) => {
-              ctx.publishAsync = pubChannelConfirm.publishAsync2.bind(pubChannelConfirm); //todo refactor
+              ctx.publishAsync = pubChannelConfirm.publishAsync.bind(pubChannelConfirm); //todo refactor
               await next();
             })
             .use(pipeline.rpc.version({version}))

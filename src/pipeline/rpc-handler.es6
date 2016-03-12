@@ -18,24 +18,20 @@ export default function createRpcRoute({name, version, channel}, ...handlers) {
           ({message:m}) => `${m.msg} ${Log.format(m.response)}: from` +
           ` AMQP message (TAG=${m.message.deliveryTag})`);
 
-        const apiResponse = {
+        const body = {
           version: version,
           status: "success",
           data: response
         };
 
-        const body = new Buffer(JSON.stringify(apiResponse), 'utf8');
-
-        await channel.publishAsync2({
+        await channel.publishAsync({
           exchange: '',
           routingKey: message.properties.replyTo,
           body,
-          options: {
-            correlationId: message.properties.correlationId,
-            headers: {
-              "api.request-id": message.properties.headers["api.request-id"],
-              "api.status": "success"
-            }
+          correlationId: message.properties.correlationId,
+          headers: {
+            "api.request-id": message.properties.headers["api.request-id"],
+            "api.status": "success"
           }
         });
       } catch(err) {
@@ -47,26 +43,22 @@ export default function createRpcRoute({name, version, channel}, ...handlers) {
           }),
           ({message:m}) => `${m.msg} from AMQP message (TAG=${m.message.deliveryTag})\n${Log.format(m.exception)}`);
 
-        const apiResponse = {
+        const body = {
           version: version,
           status: "error",
           error: err.toJSON ? err.toJSON() : err.toString()
         };
 
-        const body = new Buffer(JSON.stringify(apiResponse), 'utf8');
-
-        await channel.publishAsync2({
+        await channel.publishAsync({
           exchange: '',
           routingKey: message.properties.replyTo,
           body,
-          options: {
-            correlationId: message.properties.correlationId,
-            headers: {
-              "api.request-id": message.properties.headers["api.request-id"],
-              "api.status": "error",
-              "api.error.message": err.message,
-              "api.error.code": err.$type
-            }
+          correlationId: message.properties.correlationId,
+          headers: {
+            "api.request-id": message.properties.headers["api.request-id"],
+            "api.status": "error",
+            "api.error.message": err.message,
+            "api.error.code": err.$type
           }
         });
       }
