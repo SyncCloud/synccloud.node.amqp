@@ -20,8 +20,10 @@ export default class BaseConsumer {
   constructor(options) {
     assertType(options.channel, 'object', 'channel');
     assertType(options.queue, 'string', 'options.queue');
+    assertType(options.client, 'object', 'options.client');
     this.options = options;
-    this.channel = this.options.channel;
+    this.channel = options.channel;
+    this.client = options.client;
     this._middlewares = [];
   }
 

@@ -151,7 +151,6 @@ export default class AmqpClient {
     try {
       const client = this._client = await amqplib
         .connect(this.uri, AmqpClient.defaultOptions);
-
       this.completion.then(() => cleanup(), () => cleanup());
       this._client.on('close', this._clientClose);
       this._client.on('error', this._clientError);

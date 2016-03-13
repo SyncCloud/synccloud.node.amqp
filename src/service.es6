@@ -34,7 +34,7 @@ export default class AmqpService {
       await this.client.openAsync();
 
       if (events) {
-        for (let [fileName, config] of _.pairs(events)) {
+        for (let [fileName, config] of _.toPairs(events)) {
           const {
             queue,
             prefetch,
@@ -46,7 +46,7 @@ export default class AmqpService {
 
           const channel = await this.client.channelAsync(!!'confirm');
           prefetch && await channel.prefetchAsync(prefetch);
-          const consumer = new BaseConsumer({queue, channel});
+          const consumer = new BaseConsumer({client: this.client, queue, channel});
           consumer
             .use(pipeline.retry({maxRedeliveredCount}))
             .use(pipeline.ack)
@@ -66,18 +66,18 @@ export default class AmqpService {
       }
 
       if (rpc) {
-        for (let [componentName, config] of _.pairs(rpc)) {
+        for (let [componentName, config] of _.toPairs(rpc)) {
           const {queue, prefetch, version} = config;
           const channel = await this.getSinglePubChannel();
           prefetch && await channel.prefetchAsync(prefetch);
-          const consumer = new BaseConsumer({queue, channel, consumer: {noAck: true}});
+          const consumer = new BaseConsumer({client: this.client, queue, channel, consumer: {noAck: true}});
 
           consumer
             .use(pipeline.logError)
             .use(pipeline.rpc.version({version}))
             .use(pipeline.parseJSON());
 
-          for (let [fileName, handlerInfo] of _.pairs(config.handlers)) {
+          for (let [fileName, handlerInfo] of _.toPairs(config.handlers)) {
             const handleMessage = require(path.join(process.cwd(), 'src', 'rpc', componentName, fileName)).default;
             const {rpcName, expectedMessage = {}, ...handlerOptions} = handlerInfo;
             consumer.use(pipeline.rpc.handler({name:rpcName, version, channel},

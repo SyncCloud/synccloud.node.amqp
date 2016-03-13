@@ -120,10 +120,7 @@ export default class AmqpConsumer {
 
   @trace
   _handle(message) {
-    if (!this.consumerTag) {
-      process.nextTick(() => this._handle(message));
-    }
-    else if (message) {
+    if (message) {
       process.nextTick(() => this._handleAsync(message));
     }
     else {

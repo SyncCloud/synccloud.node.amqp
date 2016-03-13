@@ -1,10 +1,10 @@
 import ack from './ack';
-import parseJSON from './parse-message-json.es6';
-import retry from './try-redeliver.es6';
-import logError from './error-logger.es6';
-import rpcHandler from './rpc-handler.es6';
+import parseJSON from './parse-message-json';
+import retry from './try-redeliver';
+import logError from './error-logger';
+import rpcHandler from './rpc-handler';
 import rpcVersion from './rpc-version';
-import assertMessage from './assert-message.es6';
+import assertMessage from './assert-message';
 import publish from './publish';
 
 export default {
