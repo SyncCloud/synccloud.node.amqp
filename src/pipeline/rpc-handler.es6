@@ -3,7 +3,7 @@ import compose from 'koa-compose';
 
 export default function createRpcRoute({name, version, channel}, ...handlers) {
   return async function rpcRoute(ctx, next) {
-    const {message, application:app} = ctx;
+    const {message} = ctx;
     if (message.headers['api.rpc.name'] == name) {
       try {
         const handler = compose(handlers);

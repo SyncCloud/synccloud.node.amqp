@@ -32,7 +32,6 @@ export default class AmqpService {
     try {
       this.client = new AmqpClient(uri);
       await this.client.openAsync();
-      const pubChannelConfirm = await this.client.channelAsync(!!'confirm');
 
       if (events) {
         for (let [fileName, config] of _.pairs(events)) {
@@ -52,18 +51,14 @@ export default class AmqpService {
             .use(pipeline.retry({maxRedeliveredCount}))
             .use(pipeline.ack)
             .use(pipeline.logError)
-            .use(async (ctx, next) => {
-              ctx.publishAsync = pubChannelConfirm.publishAsync.bind(pubChannelConfirm); //todo refactor
-              await next();
-            })
             .use(pipeline.parseJSON());
 
           if (exchange && routingKey) {
-            consumer.use(pipeline.publish({channel: await this.getSinglePubChannel(), exchange, routingKey}))
+            consumer.use(pipeline.publish({exchange, routingKey}))
           }
 
           expectedMessage && consumer.use(pipeline.assert(expectedMessage));
-          const handleEvent = require(path.join(process.cwd(), 'src', 'events', fileName));
+          const handleEvent = require(path.join(process.cwd(), 'src', 'events', fileName)).default;
           consumer.use(await handleEvent(options));
 
           this._consumers.push(consumer);
@@ -79,15 +74,11 @@ export default class AmqpService {
 
           consumer
             .use(pipeline.logError)
-            .use(async (ctx, next) => {
-              ctx.publishAsync = pubChannelConfirm.publishAsync.bind(pubChannelConfirm); //todo refactor
-              await next();
-            })
             .use(pipeline.rpc.version({version}))
             .use(pipeline.parseJSON());
 
           for (let [fileName, handlerInfo] of _.pairs(config.handlers)) {
-            const handleMessage = require(path.join(process.cwd(), 'src', 'rpc', componentName, fileName));
+            const handleMessage = require(path.join(process.cwd(), 'src', 'rpc', componentName, fileName)).default;
             const {rpcName, expectedMessage = {}, ...handlerOptions} = handlerInfo;
             consumer.use(pipeline.rpc.handler({name:rpcName, version, channel},
               pipeline.assert(expectedMessage),

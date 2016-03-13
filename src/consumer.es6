@@ -89,9 +89,8 @@ export default class BaseConsumer {
 
     const context = new Context({
       message,
-      application: this,
-      connection: this.client,
-      channel: this._channel
+      client: this.client,
+      consumer: this._consumer
     });
 
     const fn = compose(this._middlewares);

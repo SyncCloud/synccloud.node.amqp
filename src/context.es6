@@ -7,11 +7,18 @@ export default class Context {
 
   toJSON() {
     return {
-      channel: this.channel,
-      connection: this.connection,
+      consumer: this.consumer,
+      client: this.client,
       message: this.message,
-      application: this.application,
     };
+  }
+
+  async publishAsync(options) {
+    if (!Context._pubChannel) {
+      Context._pubChannel = await this.client.channelAsync(!'confirm');
+    }
+
+    return Context._pubChannel.publishAsync(options);
   }
 
 }

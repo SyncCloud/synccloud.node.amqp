@@ -14,7 +14,6 @@ export default function init({parseFn=JSON.parse}={}) {
       Log.error(
         () => ({
           msg: 'Failed to parse AMQP message',
-          app: this,
           message,
           exception: err
         }),

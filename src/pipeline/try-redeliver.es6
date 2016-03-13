@@ -1,7 +1,7 @@
 import {Log} from '@synccloud/logging';
 
 export default function({maxRedeliveredCount}) {
-  return async function redeliver({message, application:app}, next) {
+  return async function redeliver({message}, next) {
     try {
       await next();
     } catch (err) {
@@ -13,7 +13,6 @@ export default function({maxRedeliveredCount}) {
           Log.warning(
             () => ({
               msg: 'Failed to ack AMQP message after re-delivery',
-              app,
               message,
               exception: exc
             }),
@@ -28,7 +27,6 @@ export default function({maxRedeliveredCount}) {
           Log.warning(
             () => ({
               msg: 'Failed to redeliver AMQP message',
-              app,
               message,
               exception: exc
             }),

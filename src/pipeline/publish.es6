@@ -1,10 +1,12 @@
-export default function init({channel, exchange, routingKey, options = {}}) {
-  return async function publish({message, application:app}, next) {
+export default function init({exchange, routingKey, options = {}}) {
+  return async function publish(ctx, next) {
+    const {message} = ctx;
+    
     await next();
 
     const body = new Buffer(JSON.stringify(message), 'utf8');
 
-    await channel.publishAsync({
+    await ctx.publishAsync({
       exchange,
       routingKey,
       body,

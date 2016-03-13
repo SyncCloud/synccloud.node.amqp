@@ -1,6 +1,7 @@
 import {Log} from '@synccloud/logging';
 
-export default async function ackMessage({message, application:app}, next) {
+export default async function ackMessage(ctx, next) {
+  const {message} = ctx;
   await next();
 
   try {
@@ -10,12 +11,12 @@ export default async function ackMessage({message, application:app}, next) {
     Log.error(
       () => ({
         msg: 'Failed to ack message',
-        app,
         message,
+        ctx,
         exception: exc
       }),
       ({message:m}) => `${m.msg}` +
-      ` from AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.app.consumer.queue}:\n${Log.format(m.exception)}`);
+      ` from AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.ctx.consumer.queue}:\n${Log.format(m.exception)}`);
 
     try {
       await message.dequeueAsync();
@@ -24,12 +25,12 @@ export default async function ackMessage({message, application:app}, next) {
       Log.warning(
         () => ({
           msg: 'Failed to dequeue rpc message',
-          app,
+          ctx,
           message,
           exception: exc2
         }),
         ({message:m}) => `${m.msg}` +
-        ` from AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.app.consumer.queue}:\n${Log.format(m.exception)}`);
+        ` from AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.ctx.consumer.queue}:\n${Log.format(m.exception)}`);
     }
 
     throw exc;
@@ -38,9 +39,9 @@ export default async function ackMessage({message, application:app}, next) {
   Log.info(
     () => ({
       msg: 'Successfully ACKed message',
-      app,
+      ctx,
       message
     }),
     ({message:m}) => `${m.msg} from` +
-    ` AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.app.consumer.queue}`);
+    ` AMQP message (TAG=${m.message.fields.deliveryTag}) of ${m.ctx.consumer.queue}`);
 }

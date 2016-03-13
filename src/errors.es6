@@ -1,4 +1,5 @@
 import {ErrorBase} from '@synccloud/utils';
+import _ from 'lodash';
 
 export class AmqpClientError extends ErrorBase {
   static wrap(amqp, cause) {
