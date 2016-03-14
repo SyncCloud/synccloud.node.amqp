@@ -146,7 +146,7 @@ export class AmqpRpcTimeoutError extends AmqpRpcError {
 
 export class AmqpRpcFailedError extends AmqpRpcError {
   constructor(amqp, rpc, response) {
-    super(amqp, `Rpc call ${rpc.name} failed with status ${response.status}: ${response.error}`, 'AmqpClientRpcFailError');
+    super(amqp, `Rpc call ${rpc.name} failed with status ${response.status}:\n${Log.format(response.error)}`, 'AmqpClientRpcFailError');
     Error.captureStackTrace(this, this.constructor);
   }
 }
